@@ -266,6 +266,8 @@ const ctxDeleteMessage = $("#ctx-delete-message");
 const ctxPromoteAdmin = $("#ctx-promote-admin");
 const ctxPurgeUserMessages = $("#ctx-purge-user-messages");
 
+let contextController = null;
+
 // Typing
 const typingIndicator = $("#typing-indicator");
 const typingText = $("#typing-text");
@@ -992,6 +994,36 @@ voiceController = window.VoxiumVoice.createVoiceController({
         voiceScreenFpsSelect,
     },
 });
+
+contextController = window.VoxiumContext.createContextController({
+    getState: () => state,
+    API,
+    updateRoomModeUI,
+    loadMessages,
+    renderRooms,
+    dom: {
+        contextMenu,
+        ctxHeaderTitle,
+        ctxCopyId,
+        ctxDeleteRoom,
+        ctxRoomSettings,
+        ctxDeleteMessage,
+        ctxPromoteAdmin,
+        ctxPurgeUserMessages,
+        roomSettingsModal,
+        roomSettingsForm,
+        roomSettingsName,
+        roomSettingsKind,
+        roomSettingsRequiredRole,
+        roomPrivacyPublicBtn,
+        roomPrivacyPrivateBtn,
+        roomSettingsCancelBtn,
+        roomSettingsFeedback,
+        currentRoomName,
+        messageInput,
+    },
+});
+contextController.bindEvents();
 
 function updateVoiceButtons() {
     return voiceController.updateVoiceButtons();
@@ -2841,296 +2873,13 @@ document.addEventListener("click", (e) => {
 });
 
 // ── Context Menu Logic ─────────────────────────────────
-let ctxTarget = null;
-
-function setRoomSettingsFeedback(message, isError = false) {
-    if (!roomSettingsFeedback) return;
-    roomSettingsFeedback.textContent = message || "";
-    roomSettingsFeedback.style.color = isError ? "var(--red)" : "var(--green)";
-}
-
 function closeRoomSettingsModal() {
-    roomSettingsModal?.classList.add("hidden");
-    setRoomSettingsFeedback("");
-}
-
-function getPrivateRoleFallback() {
-    const roles = Array.isArray(state.serverRoles) ? state.serverRoles : [];
-    const firstPrivate = roles.find((role) => role.name && role.name !== "user");
-    return firstPrivate?.name || "admin";
-}
-
-function syncRoomPrivacyButtons(roleName) {
-    const mode = (roleName || "user") === "user" ? "public" : "private";
-    roomPrivacyPublicBtn?.classList.toggle("active", mode === "public");
-    roomPrivacyPrivateBtn?.classList.toggle("active", mode === "private");
-}
-
-function applyRoomPrivacyMode(mode) {
-    if (!roomSettingsRequiredRole) return;
-    if (mode === "public") {
-        roomSettingsRequiredRole.value = "user";
-        syncRoomPrivacyButtons("user");
-        return;
-    }
-
-    if (roomSettingsRequiredRole.value && roomSettingsRequiredRole.value !== "user") {
-        syncRoomPrivacyButtons(roomSettingsRequiredRole.value);
-        return;
-    }
-
-    const privateRole = getPrivateRoleFallback();
-    roomSettingsRequiredRole.value = privateRole;
-    syncRoomPrivacyButtons(privateRole);
-}
-
-async function openRoomSettingsModal(roomId) {
-    if (state.role !== "admin") return;
-    const room = state.rooms.find((r) => r.id === roomId);
-    if (!room || !roomSettingsModal || !roomSettingsRequiredRole || !roomSettingsName || !roomSettingsKind) return;
-
-    roomSettingsModal.classList.remove("hidden");
-    setRoomSettingsFeedback("Chargement...");
-
-    roomSettingsName.value = room.name || "";
-    roomSettingsKind.value = room.kind === "voice" ? "voice" : "text";
-
-    try {
-        const res = await fetch(`${API}/api/server/roles`, {
-            headers: { Authorization: `Bearer ${state.token}` }
-        });
-        const data = await res.json().catch(() => []);
-        if (!res.ok) {
-            setRoomSettingsFeedback(data.error || "Impossible de charger les rôles", true);
-            return;
-        }
-
-        state.serverRoles = Array.isArray(data) ? data : [];
-
-        roomSettingsRequiredRole.innerHTML = "";
-        state.serverRoles.forEach((role) => {
-            const opt = document.createElement("option");
-            opt.value = role.name;
-            opt.textContent = role.name;
-            roomSettingsRequiredRole.appendChild(opt);
-        });
-        const hasRole = state.serverRoles.some((role) => role.name === room.required_role);
-        roomSettingsRequiredRole.value = hasRole ? room.required_role : (state.serverRoles[0]?.name || "user");
-        syncRoomPrivacyButtons(roomSettingsRequiredRole.value);
-        setRoomSettingsFeedback("");
-    } catch (err) {
-        setRoomSettingsFeedback("Erreur réseau", true);
-    }
+    return contextController?.closeRoomSettingsModal();
 }
 
 function showContextMenu(e, type, id, name) {
-    e.preventDefault();
-    e.stopPropagation();
-    ctxTarget = { type, id, name };
-
-    contextMenu.style.left = `${e.pageX}px`;
-    contextMenu.style.top = `${e.pageY}px`;
-    contextMenu.classList.remove("hidden");
-
-    ctxHeaderTitle.textContent = type === "room" ? `#${name}` : name;
-
-    ctxDeleteRoom.classList.add("hidden");
-    ctxRoomSettings.classList.add("hidden");
-    ctxDeleteMessage.classList.add("hidden");
-    ctxPromoteAdmin.classList.add("hidden");
-    ctxPurgeUserMessages.classList.add("hidden");
-
-    if (type === "room") {
-        if (state.role === "admin") {
-            ctxDeleteRoom.classList.remove("hidden");
-            ctxRoomSettings.classList.remove("hidden");
-        }
-    } else if (type === "user") {
-        if (state.role === "admin" && id !== state.userId) {
-            ctxPromoteAdmin.classList.remove("hidden");
-            ctxPurgeUserMessages.classList.remove("hidden");
-        }
-    } else if (type === "message") {
-        if (state.role === "admin" || name === state.username) {
-            ctxDeleteMessage.classList.remove("hidden");
-        }
-    }
+    return contextController?.showContextMenu(e, type, id, name);
 }
-
-document.addEventListener("click", () => contextMenu.classList.add("hidden"));
-contextMenu.addEventListener("click", (e) => e.stopPropagation());
-
-ctxCopyId.addEventListener("click", () => {
-    if (ctxTarget) {
-        navigator.clipboard.writeText(ctxTarget.id);
-        contextMenu.classList.add("hidden");
-    }
-});
-
-ctxDeleteRoom.addEventListener("click", async () => {
-    if (!ctxTarget || ctxTarget.type !== "room") return;
-    contextMenu.classList.add("hidden");
-    if (!confirm(`Supprimer le salon #${ctxTarget.name} ?`)) return;
-    try {
-        const res = await fetch(`${API}/api/rooms/${ctxTarget.id}`, {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${state.token}` }
-        });
-        if (!res.ok) {
-            const data = await res.json();
-            alert(data.error || "Erreur");
-        }
-    } catch (e) { alert("Erreur réseau"); }
-});
-
-ctxRoomSettings.addEventListener("click", async () => {
-    if (!ctxTarget || ctxTarget.type !== "room") return;
-    contextMenu.classList.add("hidden");
-    await openRoomSettingsModal(ctxTarget.id);
-});
-
-if (roomSettingsCancelBtn) {
-    roomSettingsCancelBtn.addEventListener("click", () => {
-        closeRoomSettingsModal();
-    });
-}
-
-if (roomSettingsModal) {
-    roomSettingsModal.addEventListener("click", (event) => {
-        if (event.target === roomSettingsModal) {
-            closeRoomSettingsModal();
-        }
-    });
-}
-
-if (roomSettingsRequiredRole) {
-    roomSettingsRequiredRole.addEventListener("change", () => {
-        syncRoomPrivacyButtons(roomSettingsRequiredRole.value);
-    });
-}
-
-if (roomPrivacyPublicBtn) {
-    roomPrivacyPublicBtn.addEventListener("click", () => {
-        applyRoomPrivacyMode("public");
-    });
-}
-
-if (roomPrivacyPrivateBtn) {
-    roomPrivacyPrivateBtn.addEventListener("click", () => {
-        applyRoomPrivacyMode("private");
-    });
-}
-
-if (roomSettingsForm) {
-    roomSettingsForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        if (!ctxTarget || ctxTarget.type !== "room") return;
-
-        const roomName = (roomSettingsName?.value || "").trim();
-        const roomKind = (roomSettingsKind?.value || "text").trim();
-        const requiredRole = roomSettingsRequiredRole?.value;
-        if (!roomName || !requiredRole) return;
-
-        try {
-            const res = await fetch(`${API}/api/rooms/${ctxTarget.id}`, {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${state.token}`,
-                },
-                body: JSON.stringify({
-                    name: roomName,
-                    kind: roomKind,
-                    required_role: requiredRole,
-                }),
-            });
-
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) {
-                setRoomSettingsFeedback(data.error || "Erreur", true);
-                return;
-            }
-
-            const targetRoom = state.rooms.find((r) => r.id === ctxTarget.id);
-            if (targetRoom) {
-                targetRoom.name = roomName;
-                targetRoom.kind = roomKind === "voice" ? "voice" : "text";
-                targetRoom.required_role = requiredRole;
-                if (state.currentRoomId === targetRoom.id) {
-                    state.currentRoomName = targetRoom.name;
-                    state.currentRoomKind = targetRoom.kind;
-                    currentRoomName.textContent = targetRoom.name;
-                    messageInput.placeholder = `Envoyer un message dans #${targetRoom.name}`;
-                    updateRoomModeUI(targetRoom.kind, targetRoom.name);
-                    if (targetRoom.kind === "text") {
-                        await loadMessages(targetRoom.id);
-                    }
-                }
-            }
-            renderRooms();
-            setRoomSettingsFeedback("Salon mis à jour.");
-            setTimeout(() => closeRoomSettingsModal(), 350);
-        } catch (err) {
-            setRoomSettingsFeedback("Erreur réseau", true);
-        }
-    });
-}
-
-ctxPromoteAdmin.addEventListener("click", async () => {
-    if (!ctxTarget || ctxTarget.type !== "user") return;
-    contextMenu.classList.add("hidden");
-    if (!confirm(`Promouvoir ${ctxTarget.name} comme Admin ?`)) return;
-    try {
-        const res = await fetch(`${API}/api/users/${ctxTarget.id}/role`, {
-            method: "PATCH",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${state.token}`
-            },
-            body: JSON.stringify({ role: "admin" })
-        });
-        if (res.ok) {
-            alert(`${ctxTarget.name} est maintenant Admin !`);
-        } else {
-            const data = await res.json();
-            alert(data.error || "Erreur");
-        }
-    } catch (e) { alert("Erreur réseau"); }
-});
-
-ctxDeleteMessage.addEventListener("click", async () => {
-    if (!ctxTarget || ctxTarget.type !== "message") return;
-    contextMenu.classList.add("hidden");
-    if (!confirm("Supprimer ce message ?")) return;
-    try {
-        const res = await fetch(`${API}/api/messages/${ctxTarget.id}`, {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${state.token}` }
-        });
-        if (!res.ok) {
-            const data = await res.json();
-            alert(data.error || "Erreur");
-        }
-    } catch (e) { alert("Erreur réseau"); }
-});
-
-ctxPurgeUserMessages.addEventListener("click", async () => {
-    if (!ctxTarget || ctxTarget.type !== "user") return;
-    contextMenu.classList.add("hidden");
-    if (!confirm(`Supprimer tous les messages de ${ctxTarget.name} ?`)) return;
-    try {
-        const res = await fetch(`${API}/api/users/${ctxTarget.id}/messages`, {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${state.token}` }
-        });
-        if (!res.ok) {
-            const data = await res.json();
-            alert(data.error || "Erreur");
-        }
-    } catch (e) {
-        alert("Erreur réseau");
-    }
-});
 
 // ── Utility Functions ──────────────────────────────────
 function escapeHtml(s) {
