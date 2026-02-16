@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Discord2</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="src/style.css" />
+</head>
+
+<body>
+    <!-- ═══ Auth Modal ═══ -->
+    <div id="auth-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-logo">
+                <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                    <rect width="48" height="48" rx="12" fill="#5865F2" />
+                    <path d="M18 22C18 22 20 20 24 20C28 20 30 22 30 22" stroke="white" stroke-width="2.5"
+                        stroke-linecap="round" />
+                    <circle cx="20" cy="26" r="2.5" fill="white" />
+                    <circle cx="28" cy="26" r="2.5" fill="white" />
+                    <path d="M16 32C16 32 19 34 24 34C29 34 32 32 32 32" stroke="white" stroke-width="2.5"
+                        stroke-linecap="round" />
+                </svg>
+                <h1>Discord2</h1>
+                <p class="modal-subtitle">Chat en temps réel</p>
+            </div>
+            <div class="auth-tabs">
+                <button class="tab active" data-tab="login" id="tab-login">Connexion</button>
+                <button class="tab" data-tab="register" id="tab-register">Inscription</button>
+            </div>
+            <form id="auth-form">
+                <div class="form-group">
+                    <label for="auth-username">Nom d'utilisateur</label>
+                    <input type="text" id="auth-username" placeholder="Entrez votre pseudo" autocomplete="username"
+                        required />
+                </div>
+                <div class="form-group">
+                    <label for="auth-password">Mot de passe</label>
+                    <input type="password" id="auth-password" placeholder="Entrez votre mot de passe"
+                        autocomplete="current-password" required />
+                </div>
+                <button type="submit" class="btn-primary" id="auth-submit">Se connecter</button>
+                <p id="auth-error" class="error-text"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══ Main App ═══ -->
+    <div id="app" class="hidden">
+        <!-- Guild Bar (Far Left) -->
+        <nav class="guild-bar">
+            <div class="guild-icon home-icon active" id="home-guild" title="Messages Privés">
+                <svg width="28" height="20" viewBox="0 0 48 48" fill="none">
+                    <path d="M18 22C18 22 20 20 24 20C28 20 30 22 30 22" stroke="currentColor" stroke-width="3"
+                        stroke-linecap="round" />
+                    <circle cx="20" cy="26" r="2.5" fill="currentColor" />
+                    <circle cx="28" cy="26" r="2.5" fill="currentColor" />
+                </svg>
+            </div>
+            <div class="guild-separator"></div>
+            <div class="guild-icon server-icon active" title="Discord2 Server">
+                <span>D2</span>
+            </div>
+            <div class="guild-separator"></div>
+            <div class="guild-icon add-server-icon" id="add-server-btn" title="Ajouter un serveur">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+            </div>
+        </nav>
+
+        <!-- Sidebar (Left) -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <span>Discord2</span>
+                <svg class="sidebar-header-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </div>
+            <div class="sidebar-section-title">
+                <span>SALONS TEXTUELS</span>
+                <button id="add-room-btn" title="Créer un salon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </button>
+            </div>
+            <ul id="rooms-list" class="rooms-list"></ul>
+            <div class="sidebar-section-title">
+                <span>SALONS VOCAUX</span>
+            </div>
+            <ul id="voice-rooms-list" class="rooms-list"></ul>
+            <div id="voice-quick-status" class="voice-quick-status">
+                <div class="voice-status-row">
+                    <span id="voice-status-dot" class="voice-status-dot"></span>
+                    <span id="voice-status-text">Pas connecté à un salon vocal</span>
+                </div>
+                <div class="voice-meter-row">
+                    <div id="voice-meter-bars" class="voice-meter-bars" aria-hidden="true">
+                        <span></span><span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                    <span id="voice-meter-label" class="voice-meter-label">Micro inactif</span>
+                </div>
+            </div>
+            <div class="sidebar-user">
+                <div class="user-avatar-wrapper">
+                    <div class="user-avatar" id="user-avatar"></div>
+                    <div class="status-dot online"></div>
+                </div>
+                <div class="user-info">
+                    <span id="user-name"></span>
+                    <span id="user-discriminator" class="user-discriminator">#0000</span>
+                </div>
+                <div class="user-controls">
+                    <button id="mute-btn" title="Muet" class="control-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="23"></line>
+                            <line x1="8" y1="23" x2="16" y2="23"></line>
+                        </svg>
+                    </button>
+                    <button id="deafen-btn" title="Sourdine" class="control-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+                            <path
+                                d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z">
+                            </path>
+                        </svg>
+                    </button>
+                    <button id="settings-btn" title="Paramètres utilisateur" class="control-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path
+                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Chat Area (Center) -->
+        <main class="chat-area">
+            <div class="chat-header">
+                <span class="hash" id="room-kind-icon">#</span>
+                <span id="current-room-name">Sélectionnez un salon</span>
+                <div class="header-toolbar">
+                    <button id="delete-room-btn" class="hidden toolbar-btn danger" title="Supprimer ce salon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                            </path>
+                        </svg>
+                    </button>
+                    <div class="header-divider"></div>
+                    <button class="toolbar-btn" id="pinned-btn" title="Messages épinglés">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                            <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                    </button>
+                    <button class="toolbar-btn" id="members-toggle-btn" title="Liste des membres">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </button>
+                    <div class="search-wrapper">
+                        <input type="text" id="chat-search" placeholder="Rechercher" class="chat-search-input" />
+                        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+            <div id="messages-container" class="messages-container">
+                <div class="welcome-message">
+                    <div class="welcome-icon">#</div>
+                    <h2>Bienvenue sur Discord2 !</h2>
+                    <p>Sélectionnez un salon dans la sidebar pour commencer à chatter.</p>
+                </div>
+            </div>
+            <div id="voice-room-panel" class="voice-room-panel hidden">
+                <div class="voice-room-card">
+                    <h2 id="voice-room-title">Salon vocal</h2>
+                    <p id="voice-room-subtitle">Rejoignez ce salon pour discuter en audio.</p>
+                    <div class="voice-room-actions">
+                        <button id="join-voice-btn" class="btn-primary" type="button">Rejoindre</button>
+                        <button id="leave-voice-btn" class="btn-secondary hidden" type="button">Quitter</button>
+                        <button id="voice-mute-btn" class="btn-secondary hidden" type="button">Muet</button>
+                        <button id="voice-deafen-btn" class="btn-secondary hidden" type="button">Sourdine</button>
+                    </div>
+                    <div class="voice-members-wrap">
+                        <div class="voice-members-title">Connectés</div>
+                        <ul id="voice-members-list" class="voice-members-list"></ul>
+                    </div>
+                </div>
+            </div>
+            <!-- Typing Indicator -->
+            <div id="typing-indicator" class="typing-indicator hidden">
+                <div class="typing-dots">
+                    <span></span><span></span><span></span>
+                </div>
+                <span id="typing-text">Quelqu'un est en train d'écrire...</span>
+            </div>
+            <div id="message-input-area" class="message-input-area hidden">
+                <!-- Image Preview Strip -->
+                <div id="upload-preview" class="upload-preview hidden">
+                    <div class="upload-preview-inner">
+                        <div class="upload-thumb-wrapper">
+                            <img id="upload-preview-img" src="" alt="Preview" />
+                            <button type="button" id="upload-cancel-btn" class="upload-cancel-btn" title="Annuler">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        </div>
+                        <span id="upload-filename" class="upload-filename"></span>
+                    </div>
+                </div>
+                <form id="message-form">
+                    <input type="file" id="file-input" accept="image/*" style="display:none" />
+                    <button type="button" class="input-action-btn" id="attach-btn" title="Joindre une image">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="16"></line>
+                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                        </svg>
+                    </button>
+                    <input type="text" id="message-input" placeholder="Envoyer un message dans #général"
+                        autocomplete="off" />
+                    <div class="input-actions-right">
+                        <button type="button" class="input-action-btn" id="emoji-btn" title="Emoji">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                                <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                                <line x1="15" y1="9" x2="15.01" y2="9"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+
+        <!-- Member List (Right) -->
+        <aside class="members-sidebar" id="members-sidebar">
+            <div class="members-header">EN LIGNE — <span id="member-count">0</span></div>
+            <ul id="members-list" class="members-list">
+                <!-- Dynamically populated -->
+            </ul>
+        </aside>
+    </div>
+
+    <!-- Create Room Modal -->
+    <div id="create-room-modal" class="modal hidden">
+        <div class="modal-content small">
+            <h2>Créer un salon</h2>
+            <form id="create-room-form">
+                <div class="form-group">
+                    <label for="room-name-input">Nom du salon</label>
+                    <input type="text" id="room-name-input" placeholder="nouveau-salon" required />
+                </div>
+                <div class="form-group">
+                    <label for="room-kind-input">Type</label>
+                    <select id="room-kind-input" required>
+                        <option value="text">Salon textuel</option>
+                        <option value="voice">Salon vocal</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancel-room-btn">Annuler</button>
+                    <button type="submit" class="btn-primary">Créer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══ Settings — Full-Screen Panel ═══ -->
+    <div id="settings-modal" class="settings-layer hidden">
+        <div class="settings-wrapper">
+            <!-- Settings Sidebar -->
+            <nav class="settings-nav">
+                <div class="settings-nav-inner">
+                    <div class="settings-nav-header">PARAMÈTRES UTILISATEUR</div>
+                    <button class="settings-nav-item active" data-section="my-account">Mon compte</button>
+                    <button class="settings-nav-item" data-section="profiles">Profils</button>
+                    <div class="settings-nav-separator"></div>
+                    <div class="settings-nav-header">PARAMÈTRES DE L'APPLI</div>
+                    <button class="settings-nav-item" data-section="appearance">Apparence</button>
+                    <button class="settings-nav-item" data-section="accessibility">Accessibilité</button>
+                    <div class="settings-nav-separator"></div>
+                    <button class="settings-nav-item" data-section="about">À propos</button>
+                    <div class="settings-nav-separator"></div>
+                    <button class="settings-nav-item danger" id="logout-settings-btn">
+                        <span>Déconnexion</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                            <polyline points="16,17 21,12 16,7" />
+                            <line x1="21" y1="12" x2="9" y2="12" />
+                        </svg>
+                    </button>
+                </div>
+            </nav>
+
+            <!-- Settings Content -->
+            <div class="settings-content-area">
+                <div class="settings-content-inner">
+
+                    <!-- Mon Compte -->
+                    <section id="section-my-account" class="settings-section active">
+                        <h2>Mon compte</h2>
+                        <div class="profile-card">
+                            <div class="profile-banner" id="settings-banner"></div>
+                            <div class="profile-card-body">
+                                <div class="profile-avatar-wrapper">
+                                    <div class="profile-avatar" id="settings-avatar"></div>
+                                    <div class="status-dot online large"></div>
+                                </div>
+                                <div class="profile-card-info">
+                                    <span class="profile-card-name" id="settings-username-display">Username</span>
+                                    <span class="profile-card-disc" id="settings-disc-display">#0000</span>
+                                </div>
+                                <button class="btn-edit-profile" id="btn-edit-profile">Modifier le profil</button>
+                            </div>
+                        </div>
+                        <div class="account-fields">
+                            <div class="account-field">
+                                <div class="account-field-info">
+                                    <div class="account-field-label">NOM D'UTILISATEUR</div>
+                                    <div class="account-field-value" id="acct-username-display">Username</div>
+                                </div>
+                                <button class="btn-field-edit" data-edit="username">Modifier</button>
+                            </div>
+                            <div class="account-field">
+                                <div class="account-field-info">
+                                    <div class="account-field-label">MOT DE PASSE</div>
+                                    <div class="account-field-value">••••••••</div>
+                                </div>
+                                <button class="btn-field-edit" data-edit="password">Modifier</button>
+                            </div>
+                        </div>
+
+                        <!-- Edit forms (hidden by default, shown on click) -->
+                        <div id="edit-panel" class="edit-panel hidden">
+                            <h3 id="edit-panel-title">Modifier</h3>
+                            <form id="update-profile-form">
+                                <div class="form-group" id="fg-username">
+                                    <label for="settings-username">Nom d'utilisateur</label>
+                                    <input type="text" id="settings-username" />
+                                </div>
+                                <div class="form-group hidden" id="fg-about">
+                                    <label for="settings-about">À propos de moi</label>
+                                    <textarea id="settings-about" rows="3"
+                                        placeholder="Racontez-nous quelque chose..."></textarea>
+                                </div>
+                                <div class="form-group hidden" id="fg-password">
+                                    <label for="settings-password">Nouveau mot de passe</label>
+                                    <input type="password" id="settings-password"
+                                        placeholder="Laisser vide pour ne pas changer" />
+                                </div>
+                                <div class="form-group hidden" id="fg-avatar-color">
+                                    <label>Couleur d'avatar</label>
+                                    <div class="color-picker" id="avatar-color-picker"></div>
+                                    <input type="hidden" id="settings-avatar-color" />
+                                </div>
+                                <div class="edit-panel-actions">
+                                    <button type="button" class="btn-secondary" id="cancel-edit-btn">Annuler</button>
+                                    <button type="submit" class="btn-primary">Enregistrer</button>
+                                </div>
+                                <p id="settings-feedback" class="success-text"></p>
+                            </form>
+                        </div>
+                    </section>
+
+                    <!-- Profils -->
+                    <section id="section-profiles" class="settings-section">
+                        <h2>Profils</h2>
+                        <p class="settings-description">Personnalisez comment les autres vous voient.</p>
+                        <div class="profile-preview-card">
+                            <div class="preview-banner" id="preview-banner"></div>
+                            <div class="preview-body">
+                                <div class="preview-avatar-wrapper">
+                                    <div class="preview-avatar" id="preview-avatar"></div>
+                                    <div class="status-dot online large"></div>
+                                </div>
+                                <div class="preview-info">
+                                    <h3 id="preview-username">Username</h3>
+                                    <span class="preview-disc" id="preview-disc">#0000</span>
+                                </div>
+                                <div class="preview-badges" id="preview-badges">
+                                    <span class="badge" id="settings-role-badge">USER</span>
+                                </div>
+                                <div class="preview-section">
+                                    <div class="preview-section-title">À PROPOS DE MOI</div>
+                                    <div class="preview-section-content" id="preview-about">Aucune description.</div>
+                                </div>
+                                <div class="preview-section">
+                                    <div class="preview-section-title">MEMBRE DEPUIS</div>
+                                    <div class="preview-section-content" id="preview-member-since">Février 2026</div>
+                                </div>
+                            </div>
+                        </div>
+                        <h3 class="settings-subtitle">Photo de profil</h3>
+                        <div class="avatar-upload-section">
+                            <input type="file" id="avatar-file-input" accept="image/png,image/jpeg,image/gif,image/webp"
+                                style="display:none" />
+                            <button class="btn-secondary" id="avatar-upload-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                Changer l'avatar
+                            </button>
+                            <button class="btn-secondary danger" id="avatar-remove-btn" style="display:none">Supprimer
+                                l'avatar</button>
+                            <span id="avatar-upload-status" class="upload-filename"></span>
+                        </div>
+                        <h3 class="settings-subtitle">Couleur d'avatar</h3>
+                        <div class="color-picker large" id="profile-color-picker"></div>
+                        <h3 class="settings-subtitle">À propos de moi</h3>
+                        <textarea id="profile-about-input" class="settings-textarea" rows="4"
+                            placeholder="Racontez quelque chose sur vous..."></textarea>
+                        <div class="settings-actions">
+                            <button class="btn-primary" id="save-profile-btn">Enregistrer les modifications</button>
+                            <p id="profile-feedback" class="success-text"></p>
+                        </div>
+                    </section>
+
+                    <!-- Apparence -->
+                    <section id="section-appearance" class="settings-section">
+                        <h2>Apparence</h2>
+                        <p class="settings-description">Personnalisez l'apparence de Discord2.</p>
+
+                        <h3 class="settings-subtitle">Thème</h3>
+                        <div class="theme-selector">
+                            <label class="theme-option">
+                                <input type="radio" name="theme" value="dark" checked />
+                                <div class="theme-preview dark-preview">
+                                    <div class="tp-sidebar"></div>
+                                    <div class="tp-content"></div>
+                                </div>
+                                <span>Sombre</span>
+                            </label>
+                            <label class="theme-option">
+                                <input type="radio" name="theme" value="light" />
+                                <div class="theme-preview light-preview">
+                                    <div class="tp-sidebar"></div>
+                                    <div class="tp-content"></div>
+                                </div>
+                                <span>Clair</span>
+                            </label>
+                            <label class="theme-option">
+                                <input type="radio" name="theme" value="amoled" />
+                                <div class="theme-preview amoled-preview">
+                                    <div class="tp-sidebar"></div>
+                                    <div class="tp-content"></div>
+                                </div>
+                                <span>AMOLED</span>
+                            </label>
+                        </div>
+
+                        <h3 class="settings-subtitle">Taille des messages</h3>
+                        <div class="slider-group">
+                            <span class="slider-label-left">12px</span>
+                            <input type="range" id="font-size-slider" min="12" max="20" value="15"
+                                class="discord-slider" />
+                            <span class="slider-label-right">20px</span>
+                        </div>
+                        <p class="slider-current">Actuel: <span id="font-size-display">15px</span></p>
+                    </section>
+
+                    <!-- Accessibilité -->
+                    <section id="section-accessibility" class="settings-section">
+                        <h2>Accessibilité</h2>
+                        <p class="settings-description">Adaptez Discord2 à vos besoins.</p>
+
+                        <div class="toggle-setting">
+                            <div class="toggle-info">
+                                <div class="toggle-title">Réduire les animations</div>
+                                <div class="toggle-desc">Désactive les animations et transitions non essentielles.</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="reduce-motion-toggle" />
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="toggle-setting">
+                            <div class="toggle-info">
+                                <div class="toggle-title">Mode compact</div>
+                                <div class="toggle-desc">Réduit l'espacement entre les messages.</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="compact-mode-toggle" />
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </section>
+
+                    <!-- À propos -->
+                    <section id="section-about" class="settings-section">
+                        <h2>À propos</h2>
+                        <div class="about-content">
+                            <div class="about-logo">
+                                <svg width="64" height="64" viewBox="0 0 48 48" fill="none">
+                                    <rect width="48" height="48" rx="12" fill="#5865F2" />
+                                    <path d="M18 22C18 22 20 20 24 20C28 20 30 22 30 22" stroke="white"
+                                        stroke-width="2.5" stroke-linecap="round" />
+                                    <circle cx="20" cy="26" r="2.5" fill="white" />
+                                    <circle cx="28" cy="26" r="2.5" fill="white" />
+                                    <path d="M16 32C16 32 19 34 24 34C29 34 32 32 32 32" stroke="white"
+                                        stroke-width="2.5" stroke-linecap="round" />
+                                </svg>
+                                <h3>Discord2</h3>
+                            </div>
+                            <div class="about-info">
+                                <div class="about-row">
+                                    <span class="about-label">Version</span>
+                                    <span class="about-value">2.0.0</span>
+                                </div>
+                                <div class="about-row">
+                                    <span class="about-label">Frontend</span>
+                                    <span class="about-value">HTML / CSS / JS + Tauri</span>
+                                </div>
+                                <div class="about-row">
+                                    <span class="about-label">Backend</span>
+                                    <span class="about-value">Rust (Actix-web) + SQLite</span>
+                                </div>
+                                <div class="about-row">
+                                    <span class="about-label">WebSocket</span>
+                                    <span class="about-value">actix-ws + broadcast</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                </div>
+
+                <!-- Close button (Discord-style) -->
+                <div class="settings-close-area">
+                    <button class="settings-close-btn" id="close-settings-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                    <div class="settings-close-label">ESC</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Popout Card -->
+    <div id="user-popout" class="user-popout hidden">
+        <div class="popout-banner" id="popout-banner"></div>
+        <div class="popout-body">
+            <div class="popout-avatar-wrapper">
+                <div class="popout-avatar" id="popout-avatar"></div>
+                <div class="status-dot online large"></div>
+            </div>
+            <h3 class="popout-username" id="popout-username">Username</h3>
+            <span class="popout-disc" id="popout-disc">#0000</span>
+            <div class="popout-divider"></div>
+            <div class="popout-section" id="popout-about-section" style="display:none">
+                <div class="popout-section-title">À PROPOS DE MOI</div>
+                <div class="popout-about-text" id="popout-about-text"></div>
+            </div>
+            <div class="popout-section">
+                <div class="popout-section-title">RÔLE</div>
+                <div class="popout-badges" id="popout-badges">
+                    <span class="badge">USER</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="context-menu" class="context-menu hidden">
+        <div class="menu-item" id="ctx-header-title">Options</div>
+        <div class="menu-separator"></div>
+        <div class="menu-item" id="ctx-copy-id">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span>Copier l'ID</span>
+        </div>
+        <div class="menu-separator"></div>
+        <div class="menu-item danger hidden" id="ctx-delete-room">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            <span>Supprimer le salon</span>
+        </div>
+        <div class="menu-item danger hidden" id="ctx-delete-message">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            <span>Supprimer le message</span>
+        </div>
+        <div class="menu-item danger hidden" id="ctx-promote-admin">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 15l-2 5 9-11h-5l2-5-9 11h5z"></path>
+            </svg>
+            <span>Promouvoir Admin</span>
+        </div>
+    </div>
+
+    <!-- Emoji Picker -->
+    <div id="emoji-picker" class="emoji-picker hidden">
+        <div class="emoji-picker-header">
+            <input type="text" id="emoji-search" class="emoji-search" placeholder="Rechercher un emoji" />
+        </div>
+        <div class="emoji-picker-tabs">
+            <button class="emoji-tab active" data-category="smileys" title="Smileys">😀</button>
+            <button class="emoji-tab" data-category="people" title="Personnes">👋</button>
+            <button class="emoji-tab" data-category="nature" title="Nature">🐱</button>
+            <button class="emoji-tab" data-category="food" title="Nourriture">🍕</button>
+            <button class="emoji-tab" data-category="activities" title="Activités">⚽</button>
+            <button class="emoji-tab" data-category="objects" title="Objets">💡</button>
+            <button class="emoji-tab" data-category="symbols" title="Symboles">❤️</button>
+            <button class="emoji-tab" data-category="flags" title="Drapeaux">🏳️</button>
+        </div>
+        <div class="emoji-picker-body" id="emoji-picker-body">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <script src="src/main.js"></script>
+</body>
+
+</html>

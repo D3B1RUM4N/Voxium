@@ -1,0 +1,24 @@
+{
+    "productName": "Discord2",
+    "version": "0.1.0",
+    "identifier": "com.discord2.app",
+    "build": {
+        "frontendDist": "../",
+        "beforeDevCommand": "",
+        "beforeBuildCommand": ""
+    },
+    "app": {
+        "windows": [
+            {
+                "title": "Discord2",
+                "width": 1100,
+                "height": 750,
+                "resizable": true,
+                "fullscreen": false
+            }
+        ],
+        "security": {
+            "csp": "default-src 'self'; connect-src 'self' http://127.0.0.1:8080 ws://127.0.0.1:8080; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'"
+        }
+    }
+}
