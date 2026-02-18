@@ -1,11 +1,11 @@
 {
     "productName": "Voxium",
     "version": "0.1.0",
-    "identifier": "com.voxium.app",
+    "identifier": "com.voxium.desktop",
     "build": {
-        "frontendDist": "../",
-        "beforeDevCommand": "",
-        "beforeBuildCommand": ""
+        "frontendDist": "../dist",
+        "beforeDevCommand": "node scripts/copy-assets.js",
+        "beforeBuildCommand": "node scripts/copy-assets.js"
     },
     "app": {
         "windows": [

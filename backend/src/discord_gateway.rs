@@ -65,7 +65,7 @@ enum GatewayCommand {
     },
 }
 
-pub(crate) struct GatewaySession {
+pub struct GatewaySession {
     cmd_tx: mpsc::Sender<GatewayCommand>,
     presence: Arc<Mutex<VoicePresenceState>>,
 }

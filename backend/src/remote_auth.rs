@@ -38,7 +38,7 @@ pub enum QrStatus {
     Cancelled,
 }
 
-pub(crate) struct QrSession {
+pub struct QrSession {
     status: QrStatus,
     cancel_tx: Option<mpsc::Sender<()>>,
 }

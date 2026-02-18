@@ -48,10 +48,10 @@ Cargo.lock
 # Node / Frontend
 # =========================
 node_modules/
-dist/
 build/
 coverage/
 package-lock.json
+discord-app/dist/
 
 # =========================
 # Tauri
@@ -74,3 +74,6 @@ build_output.txt
 build_errors.txt
 *.tmp
 *.temp
+release_package/
+release_launch.bat
+*.zip
