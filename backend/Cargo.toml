@@ -30,4 +30,5 @@ image = { version = "0.25", default-features = false, features = ["png"] }
 aes-gcm = "0.10"
 rand = "0.8"
 actix-governor = "0.5"
+serde_urlencoded = "0.7"
 
