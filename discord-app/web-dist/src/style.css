@@ -4074,6 +4074,44 @@ body {
     position: relative;
 }
 
+/* Discord guild folders (match official Discord layout: collapsed/expanded) */
+.discord-guild-folder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.discord-folder-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+}
+
+.discord-guild-folder.has-active > .discord-folder-btn {
+    background: rgba(122, 92, 255, 0.16);
+    border-color: rgba(122, 92, 255, 0.45);
+    color: var(--header-primary);
+}
+
+.discord-folder-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.discord-folder-items {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.discord-guild-folder.is-open > .discord-folder-items {
+    display: flex;
+}
+
 #discord-guilds-container .guild-icon img {
     width: 100%;
     height: 100%;
@@ -4903,4 +4941,76 @@ body {
     color: var(--text-muted);
     text-align: center;
     background: var(--bg-primary);
+}
+
+/* ═══ Discord Settings Section ═══════════════════════ */
+
+.settings-input {
+    width: 100%;
+    max-width: 340px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-primary);
+    color: var(--text-normal);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.settings-input:focus {
+    border-color: var(--blurple);
+}
+
+.settings-input::placeholder {
+    color: var(--text-muted);
+}
+
+.discord-settings-loading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 32px 0;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.discord-settings-error {
+    padding: 24px 0;
+    color: var(--red);
+    font-size: 14px;
+}
+
+.discord-settings-error button {
+    margin-top: 8px;
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--border-subtle);
+    border-top-color: var(--blurple);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+#section-discord-settings .toggle-setting {
+    padding: 12px 0;
+}
+
+#section-discord-settings .account-field {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+#section-discord-settings .account-field:last-of-type {
+    border-bottom: none;
+}
+
+#section-discord-settings .settings-actions {
+    margin-top: 24px;
 }

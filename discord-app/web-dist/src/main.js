@@ -2333,6 +2333,11 @@ function switchSettingsSection(sectionName) {
     if (settingsContentInner) {
         settingsContentInner.scrollTop = 0;
     }
+
+    // Load Discord settings on first visit
+    if (sectionName === "discord-settings" && !_discordSettingsLoaded) {
+        loadDiscordSettings();
+    }
 }
 
 function filterSettingsNav(query) {
@@ -2700,6 +2705,138 @@ function populateSettingsUI() {
     $("#reduce-motion-toggle").checked = prefs.reduceMotion;
     $("#compact-mode-toggle").checked = prefs.compactMode;
 }
+
+// ═══ Discord Settings Logic ════════════════════════════
+
+let _discordSettingsLoaded = false;
+let _discordSettingsData = null;
+
+async function loadDiscordSettings() {
+    const loading = $("#discord-settings-loading");
+    const error = $("#discord-settings-error");
+    const content = $("#discord-settings-content");
+    if (!loading || !content) return;
+
+    loading.classList.remove("hidden");
+    error.classList.add("hidden");
+    content.classList.add("hidden");
+
+    try {
+        const s = await VoxiumDiscord.getUserSettings();
+        _discordSettingsData = s;
+        _discordSettingsLoaded = true;
+
+        // Populate fields
+        const setVal = (id, val) => { const el = $("#" + id); if (el) el.value = val ?? ""; };
+        const setChk = (id, val) => { const el = $("#" + id); if (el) el.checked = !!val; };
+
+        setVal("ds-status", s.status || "online");
+        const csText = $("#ds-custom-status-text");
+        if (csText) csText.value = (s.custom_status && s.custom_status.text) || "";
+
+        setVal("ds-theme", s.theme || "dark");
+        setVal("ds-locale", s.locale || "en-US");
+        setChk("ds-message-display-compact", s.message_display_compact);
+
+        setChk("ds-render-embeds", s.render_embeds);
+        setChk("ds-render-reactions", s.render_reactions);
+        setChk("ds-inline-attachment-media", s.inline_attachment_media);
+        setChk("ds-inline-embed-media", s.inline_embed_media);
+        setChk("ds-gif-auto-play", s.gif_auto_play);
+        setChk("ds-animate-emoji", s.animate_emoji);
+        setChk("ds-convert-emoticons", s.convert_emoticons);
+        setChk("ds-enable-tts-command", s.enable_tts_command);
+
+        setVal("ds-explicit-content-filter", String(s.explicit_content_filter ?? 0));
+        // default_guilds_restricted: true means DMs from guild members are BLOCKED
+        // We invert it: "Autoriser les DM" toggle ON = not restricted
+        setChk("ds-default-guilds-restricted", !s.default_guilds_restricted);
+
+        setChk("ds-developer-mode", s.developer_mode);
+        setChk("ds-show-current-game", s.show_current_game);
+        setChk("ds-detect-platform-accounts", s.detect_platform_accounts);
+        setChk("ds-disable-games-tab", s.disable_games_tab);
+
+        loading.classList.add("hidden");
+        content.classList.remove("hidden");
+    } catch (err) {
+        console.error("Failed to load Discord settings:", err);
+        loading.classList.add("hidden");
+        error.classList.remove("hidden");
+    }
+}
+
+async function saveDiscordSettings() {
+    const feedback = $("#ds-feedback");
+    const btn = $("#ds-save-btn");
+    if (feedback) { feedback.textContent = ""; feedback.style.color = ""; }
+
+    const getVal = (id) => { const el = $("#" + id); return el ? el.value : undefined; };
+    const getChk = (id) => { const el = $("#" + id); return el ? el.checked : undefined; };
+
+    const patch = {};
+
+    patch.status = getVal("ds-status") || "online";
+
+    const csText = getVal("ds-custom-status-text");
+    if (csText) {
+        patch.custom_status = { text: csText };
+    } else {
+        patch.custom_status = null;
+    }
+
+    patch.theme = getVal("ds-theme") || "dark";
+    patch.locale = getVal("ds-locale") || "en-US";
+    patch.message_display_compact = !!getChk("ds-message-display-compact");
+
+    patch.render_embeds = !!getChk("ds-render-embeds");
+    patch.render_reactions = !!getChk("ds-render-reactions");
+    patch.inline_attachment_media = !!getChk("ds-inline-attachment-media");
+    patch.inline_embed_media = !!getChk("ds-inline-embed-media");
+    patch.gif_auto_play = !!getChk("ds-gif-auto-play");
+    patch.animate_emoji = !!getChk("ds-animate-emoji");
+    patch.convert_emoticons = !!getChk("ds-convert-emoticons");
+    patch.enable_tts_command = !!getChk("ds-enable-tts-command");
+
+    patch.explicit_content_filter = parseInt(getVal("ds-explicit-content-filter") || "0", 10);
+    // Invert: toggle ON = allow DMs = not restricted
+    patch.default_guilds_restricted = !getChk("ds-default-guilds-restricted");
+
+    patch.developer_mode = !!getChk("ds-developer-mode");
+    patch.show_current_game = !!getChk("ds-show-current-game");
+    patch.detect_platform_accounts = !!getChk("ds-detect-platform-accounts");
+    patch.disable_games_tab = !!getChk("ds-disable-games-tab");
+
+    if (btn) btn.disabled = true;
+    try {
+        await VoxiumDiscord.updateUserSettings(patch);
+        _discordSettingsData = { ..._discordSettingsData, ...patch };
+        if (feedback) {
+            feedback.textContent = "Paramètres Discord sauvegardés !";
+            feedback.style.color = "var(--green)";
+        }
+    } catch (err) {
+        console.error("Failed to save Discord settings:", err);
+        if (feedback) {
+            feedback.textContent = "Erreur : " + (err.message || "Échec de la sauvegarde");
+            feedback.style.color = "var(--red)";
+        }
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+// Bind Discord settings save button
+document.addEventListener("DOMContentLoaded", () => {
+    const saveBtn = $("#ds-save-btn");
+    if (saveBtn) saveBtn.addEventListener("click", saveDiscordSettings);
+
+    const retryBtn = $("#discord-settings-retry");
+    if (retryBtn) retryBtn.addEventListener("click", () => {
+        _discordSettingsLoaded = false;
+        loadDiscordSettings();
+    });
+});
 
 function getAvatarBgColor(index) {
     const colors = ["#5865f2", "#57f287", "#feb347", "#ed4245", "#e91e63", "#9b59b6", "#1abc9c", "#e67e22"];
@@ -3782,31 +3919,7 @@ async function loadDiscordGuildsBar() {
         dmIcon.addEventListener("click", () => selectDiscordDMs());
         discordGuildsContainer.appendChild(dmIcon);
 
-        if (orderedGuilds.length) {
-            const sep = document.createElement("div");
-            sep.className = "guild-separator";
-            discordGuildsContainer.appendChild(sep);
-        }
-
-        // Render guild icons with optional folder separators
-        let prevFolderIdx = -1;
-        const folderMap = new Map();
-        if (settings?.guild_folders?.length) {
-            settings.guild_folders.forEach((f, fi) => {
-                (f.guild_ids || []).forEach(gid => folderMap.set(gid, fi));
-            });
-        }
-
-        orderedGuilds.forEach(g => {
-            // Add separator between different folders
-            const folderIdx = folderMap.get(g.id) ?? -1;
-            if (prevFolderIdx !== -1 && folderIdx !== prevFolderIdx) {
-                const sep = document.createElement("div");
-                sep.className = "guild-separator";
-                discordGuildsContainer.appendChild(sep);
-            }
-            prevFolderIdx = folderIdx;
-
+        const renderGuildIcon = (g, parent) => {
             const icon = document.createElement("div");
             icon.className = "guild-icon discord-guild-btn";
             icon.title = g.name;
@@ -3819,10 +3932,85 @@ async function loadDiscordGuildsBar() {
             }
 
             icon.insertAdjacentHTML("beforeend", '<span class="integration-corner" aria-hidden="true">D</span>');
-
             icon.addEventListener("click", () => selectDiscordGuild(g));
-            discordGuildsContainer.appendChild(icon);
-        });
+            (parent || discordGuildsContainer).appendChild(icon);
+            return icon;
+        };
+
+        const renderFolder = (folder, folderIdx, folderGuilds) => {
+            const wrapper = document.createElement("div");
+            wrapper.className = "discord-guild-folder";
+            const folderKey = (folder && folder.id) ? String(folder.id) : `idx-${folderIdx}`;
+            wrapper.dataset.folderKey = folderKey;
+
+            const btn = document.createElement("div");
+            btn.className = "guild-icon discord-folder-btn";
+            btn.title = folder?.name ? String(folder.name) : "Dossier";
+
+            const folderLabel = (folder?.name && String(folder.name).trim())
+                ? escapeHtml(String(folder.name).trim().slice(0, 2).toUpperCase())
+                : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h9a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>';
+
+            btn.innerHTML = `<span class="discord-folder-label" aria-hidden="true">${folderLabel}</span>`;
+            btn.insertAdjacentHTML("beforeend", '<span class="integration-corner" aria-hidden="true">D</span>');
+
+            btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                wrapper.classList.toggle("is-open");
+            });
+
+            const items = document.createElement("div");
+            items.className = "discord-folder-items";
+            folderGuilds.forEach(g => renderGuildIcon(g, items));
+
+            wrapper.appendChild(btn);
+            wrapper.appendChild(items);
+            return wrapper;
+        };
+
+        // Separator after DM icon if there is anything to render
+        const hasAnyGuilds = orderedGuilds.length > 0;
+        if (hasAnyGuilds) {
+            const sep = document.createElement("div");
+            sep.className = "guild-separator";
+            discordGuildsContainer.appendChild(sep);
+        }
+
+        // Render folders exactly like Discord layout: each entry in guild_folders is either
+        // - root (id === null): guilds displayed normally
+        // - folder (id != null): a collapsible folder containing guild icons
+        const guildById = new Map(orderedGuilds.map(g => [g.id, g]));
+        const rendered = new Set();
+
+        if (settings?.guild_folders?.length) {
+            settings.guild_folders.forEach((f, folderIdx) => {
+                const ids = (f.guild_ids || []).filter(id => guildById.has(id));
+                if (!ids.length) return;
+
+                ids.forEach(id => rendered.add(id));
+                const guildObjs = ids.map(id => guildById.get(id));
+
+                if (f?.id == null) {
+                    guildObjs.forEach(g => renderGuildIcon(g));
+                } else {
+                    const folderEl = renderFolder(f, folderIdx, guildObjs);
+                    discordGuildsContainer.appendChild(folderEl);
+                }
+            });
+
+            // Any remaining guilds not present in guild_folders: append at the end (still ordered)
+            orderedGuilds.forEach(g => {
+                if (rendered.has(g.id)) return;
+                renderGuildIcon(g);
+            });
+        } else {
+            orderedGuilds.forEach(g => renderGuildIcon(g));
+        }
+
+        // Keep folder UI consistent with current selection (if any)
+        openDiscordFolderForGuildId(discordState.currentGuildId);
+        syncDiscordFolderActiveFlags();
 
         roomsList.innerHTML = '<li class="discord-placeholder">Sélectionnez un serveur.</li>';
     } catch (err) {
@@ -3832,10 +4020,35 @@ async function loadDiscordGuildsBar() {
     }
 }
 
+function closeAllDiscordFolders(exceptWrapper = null) {
+    if (!discordGuildsContainer) return;
+    discordGuildsContainer.querySelectorAll(".discord-guild-folder.is-open").forEach(w => {
+        if (exceptWrapper && w === exceptWrapper) return;
+        w.classList.remove("is-open");
+    });
+}
+
+function openDiscordFolderForGuildId(guildId) {
+    if (!discordGuildsContainer || !guildId) return;
+    const icon = discordGuildsContainer.querySelector(`.discord-guild-btn[data-id="${CSS.escape(String(guildId))}"]`);
+    const wrapper = icon?.closest(".discord-guild-folder");
+    if (!wrapper) return;
+    wrapper.classList.add("is-open");
+}
+
+function syncDiscordFolderActiveFlags() {
+    if (!discordGuildsContainer) return;
+    discordGuildsContainer.querySelectorAll(".discord-guild-folder").forEach(w => {
+        w.classList.toggle("has-active", !!w.querySelector(".discord-guild-btn.active"));
+    });
+}
+
 // ── Select DMs ──────────────────────────────────────────
 function selectDiscordDMs() {
     discordGuildsContainer.querySelectorAll(".guild-icon").forEach(el => el.classList.remove("active"));
     discordGuildsContainer.querySelector(".discord-dm-guild")?.classList.add("active");
+
+    syncDiscordFolderActiveFlags();
 
     discordState.currentGuildId = null;
     discordState.currentChannelId = null;
@@ -3927,6 +4140,9 @@ async function selectDiscordGuild(guild) {
     discordGuildsContainer.querySelectorAll(".guild-icon").forEach(el => {
         el.classList.toggle("active", el.dataset.id === guild.id);
     });
+
+    openDiscordFolderForGuildId(guild.id);
+    syncDiscordFolderActiveFlags();
 
     // Sidebar
     setSidebarHeaderDiscord(guild.name);

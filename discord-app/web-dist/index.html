@@ -626,6 +626,17 @@
                         </button>
 
                         <div class="settings-nav-separator"></div>
+                        <div class="settings-nav-header">PARAMÈTRES DISCORD</div>
+                        <button class="settings-nav-item" data-section="discord-settings">
+                            <span class="settings-item-left">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19.73 4.87a18.2 18.2 0 0 0-4.6-1.44c-.2.36-.43.85-.59 1.23a16.84 16.84 0 0 0-5.07 0c-.17-.38-.4-.87-.6-1.23a18.17 18.17 0 0 0-4.6 1.44A19.25 19.25 0 0 0 .96 18.06a18.4 18.4 0 0 0 5.63 2.87c.46-.62.86-1.28 1.2-1.98a11.83 11.83 0 0 1-1.88-.91c.16-.12.31-.24.46-.36a13.05 13.05 0 0 0 11.27 0c.15.13.3.25.46.36a11.9 11.9 0 0 1-1.88.91c.35.7.75 1.36 1.2 1.98a18.36 18.36 0 0 0 5.63-2.87A19.18 19.18 0 0 0 19.73 4.87zM8.3 15.12c-1.18 0-2.16-1.1-2.16-2.44 0-1.35.95-2.44 2.16-2.44 1.2 0 2.18 1.1 2.16 2.44 0 1.34-.95 2.44-2.16 2.44zm7.4 0c-1.18 0-2.16-1.1-2.16-2.44 0-1.35.95-2.44 2.16-2.44 1.2 0 2.18 1.1 2.16 2.44 0 1.34-.95 2.44-2.16 2.44z" />
+                                </svg>
+                                <span>Discord</span>
+                            </span>
+                        </button>
+
+                        <div class="settings-nav-separator"></div>
                         <div class="settings-nav-header">PARAMÈTRES DE L'APPLI</div>
                         <button class="settings-nav-item" data-section="appearance">
                             <span class="settings-item-left">
@@ -964,6 +975,290 @@
                                 <input type="checkbox" id="compact-mode-toggle" />
                                 <span class="toggle-slider"></span>
                             </label>
+                        </div>
+                    </section>
+
+                    <!-- Paramètres Discord -->
+                    <section id="section-discord-settings" class="settings-section">
+                        <h2>Paramètres Discord</h2>
+                        <p class="settings-description">Gérez vos paramètres Discord directement depuis Voxium.</p>
+
+                        <div id="discord-settings-loading" class="discord-settings-loading">
+                            <div class="spinner"></div>
+                            <span>Chargement des paramètres Discord…</span>
+                        </div>
+
+                        <div id="discord-settings-error" class="discord-settings-error hidden">
+                            <p>Impossible de charger les paramètres Discord.</p>
+                            <button class="btn-secondary" id="discord-settings-retry">Réessayer</button>
+                        </div>
+
+                        <div id="discord-settings-content" class="hidden">
+
+                            <h3 class="settings-subtitle">Statut</h3>
+                            <div class="account-field">
+                                <div class="account-field-info">
+                                    <div class="account-field-label">STATUT EN LIGNE</div>
+                                    <div class="account-field-value">
+                                        <select id="ds-status" class="settings-select">
+                                            <option value="online">En ligne</option>
+                                            <option value="idle">Absent</option>
+                                            <option value="dnd">Ne pas déranger</option>
+                                            <option value="invisible">Invisible</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="account-field">
+                                <div class="account-field-info">
+                                    <div class="account-field-label">STATUT PERSONNALISÉ</div>
+                                    <div class="account-field-value">
+                                        <input type="text" id="ds-custom-status-text" class="settings-input" placeholder="Définir un statut personnalisé…" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-nav-separator" style="margin:16px 0"></div>
+
+                            <h3 class="settings-subtitle">Apparence</h3>
+                            <div class="account-field">
+                                <div class="account-field-info">
+                                    <div class="account-field-label">THÈME</div>
+                                    <div class="account-field-value">
+                                        <select id="ds-theme" class="settings-select">
+                                            <option value="dark">Sombre</option>
+                                            <option value="light">Clair</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="account-field">
+                                <div class="account-field-info">
+                                    <div class="account-field-label">LANGUE</div>
+                                    <div class="account-field-value">
+                                        <select id="ds-locale" class="settings-select">
+                                            <option value="fr">Français</option>
+                                            <option value="en-US">English (US)</option>
+                                            <option value="en-GB">English (UK)</option>
+                                            <option value="de">Deutsch</option>
+                                            <option value="es-ES">Español</option>
+                                            <option value="it">Italiano</option>
+                                            <option value="pt-BR">Português (BR)</option>
+                                            <option value="ja">日本語</option>
+                                            <option value="ko">한국어</option>
+                                            <option value="zh-CN">中文 (简体)</option>
+                                            <option value="zh-TW">中文 (繁體)</option>
+                                            <option value="ru">Русский</option>
+                                            <option value="pl">Polski</option>
+                                            <option value="nl">Nederlands</option>
+                                            <option value="tr">Türkçe</option>
+                                            <option value="sv-SE">Svenska</option>
+                                            <option value="da">Dansk</option>
+                                            <option value="no">Norsk</option>
+                                            <option value="fi">Suomi</option>
+                                            <option value="cs">Čeština</option>
+                                            <option value="el">Ελληνικά</option>
+                                            <option value="ro">Română</option>
+                                            <option value="bg">Български</option>
+                                            <option value="uk">Українська</option>
+                                            <option value="hi">हिन्दी</option>
+                                            <option value="th">ไทย</option>
+                                            <option value="vi">Tiếng Việt</option>
+                                            <option value="hr">Hrvatski</option>
+                                            <option value="hu">Magyar</option>
+                                            <option value="lt">Lietuvių</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="toggle-setting">
+                                <div class="toggle-info">
+                                    <div class="toggle-title">Messages compacts</div>
+                                    <div class="toggle-desc">Réduit l'espacement des messages pour en afficher plus à l'écran.</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="ds-message-display-compact" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="settings-nav-separator" style="margin:16px 0"></div>
+
+                            <h3 class="settings-subtitle">Chat</h3>
+
+                            <div class="toggle-setting">
+                                <div class="toggle-info">
+                                    <div class="toggle-title">Afficher les embeds</div>
+                                    <div class="toggle-desc">Affiche le contenu des liens envoyés dans le chat.</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="ds-render-embeds" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="toggle-setting">
+                                <div class="toggle-info">
+                                    <div class="toggle-title">Afficher les réactions</div>
+                                    <div class="toggle-desc">Affiche les réactions ajoutées aux messages.</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="ds-render-reactions" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="toggle-setting">
+                                <div class="toggle-info">
+                                    <div class="toggle-title">Pièces jointes en ligne</div>
+                                    <div class="toggle-desc">Affiche les images et vidéos directement dans le chat.</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="ds-inline-attachment-media" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="toggle-setting">
+                                <div class="toggle-info">
+                                    <div class="toggle-title">Médias intégrés en ligne</div>
+                                    <div class="toggle-desc">Affiche les aperçus des médias intégrés dans le chat.</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="ds-inline-embed-media" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="toggle-setting">
+                                <div class="toggle-info">
+                                    <div class="toggle-title">Lecture auto des GIFs</div>
+                                    <div class="toggle-desc">Les GIFs sont lus automatiquement dans le chat.</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="ds-gif-auto-play" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="toggle-setting">
+                                <div class="toggle-info">
+                                    <div class="toggle-title">Animer les emojis</div>
+                                    <div class="toggle-desc">Anime les emojis dans le chat.</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="ds-animate-emoji" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="toggle-setting">
+                                <div class="toggle-info">
+                                    <div class="toggle-title">Convertir les émoticônes</div>
+                                    <div class="toggle-desc">Convertit automatiquement :) en 😊 et les autres émoticônes texte.</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="ds-convert-emoticons" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="toggle-setting">
+                                <div class="toggle-info">
+                                    <div class="toggle-title">Activer la synthèse vocale (TTS)</div>
+                                    <div class="toggle-desc">Permet la lecture des commandes /tts.</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="ds-enable-tts-command" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="settings-nav-separator" style="margin:16px 0"></div>
+
+                            <h3 class="settings-subtitle">Confidentialité</h3>
+
+                            <div class="account-field">
+                                <div class="account-field-info">
+                                    <div class="account-field-label">FILTRE DE CONTENU EXPLICITE</div>
+                                    <div class="account-field-value">
+                                        <select id="ds-explicit-content-filter" class="settings-select">
+                                            <option value="0">Ne pas filtrer</option>
+                                            <option value="1">Filtrer les messages des non-amis</option>
+                                            <option value="2">Filtrer tous les messages</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="toggle-setting">
+                                <div class="toggle-info">
+                                    <div class="toggle-title">Autoriser les DM de serveurs</div>
+                                    <div class="toggle-desc">Permet aux membres des serveurs de vous envoyer un message privé.</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="ds-default-guilds-restricted" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="settings-nav-separator" style="margin:16px 0"></div>
+
+                            <h3 class="settings-subtitle">Avancé</h3>
+
+                            <div class="toggle-setting">
+                                <div class="toggle-info">
+                                    <div class="toggle-title">Mode développeur</div>
+                                    <div class="toggle-desc">Active les options de copie d'ID et d'autres outils de développement.</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="ds-developer-mode" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="toggle-setting">
+                                <div class="toggle-info">
+                                    <div class="toggle-title">Afficher l'activité en cours</div>
+                                    <div class="toggle-desc">Montre aux autres ce que vous jouez ou écoutez.</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="ds-show-current-game" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="toggle-setting">
+                                <div class="toggle-info">
+                                    <div class="toggle-title">Détecter les comptes de plateformes</div>
+                                    <div class="toggle-desc">Détecte automatiquement les comptes liés (Steam, Spotify, etc.).</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="ds-detect-platform-accounts" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="toggle-setting">
+                                <div class="toggle-info">
+                                    <div class="toggle-title">Désactiver l'onglet Jeux</div>
+                                    <div class="toggle-desc">Masque l'onglet de la bibliothèque de jeux.</div>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="ds-disable-games-tab" />
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+
+                            <div class="settings-nav-separator" style="margin:16px 0"></div>
+
+                            <div class="settings-actions">
+                                <button class="btn-primary" id="ds-save-btn">Enregistrer les modifications</button>
+                                <p id="ds-feedback" class="success-text"></p>
+                            </div>
                         </div>
                     </section>
 

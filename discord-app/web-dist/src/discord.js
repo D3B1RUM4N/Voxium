@@ -145,6 +145,14 @@ window.VoxiumDiscord = (() => {
         return request("/users/@me/settings");
     }
 
+    /** Update user settings (PATCH) */
+    async function updateUserSettings(settings) {
+        return request("/users/@me/settings", {
+            method: "PATCH",
+            body: settings,
+        });
+    }
+
     return {
         request,
         getMe,
@@ -163,5 +171,6 @@ window.VoxiumDiscord = (() => {
         addReaction,
         removeReaction,
         getUserSettings,
+        updateUserSettings,
     };
 })();
