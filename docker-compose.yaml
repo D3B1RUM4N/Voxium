@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  voxium-backend:
+    build:
+      context: .           # Le point (.) ici signifie "la racine du repo GitHub"
+      dockerfile: backend/Dockerfile # Le chemin vers ton Dockerfile dans le repo
+    container_name: voxium_backend
+    restart: unless-stopped
+    ports:
+      - "8083:8080"
+    environment:
+      - PORT=8080
+      - DATABASE_URL=sqlite:/app/data/voxium.db
+      - JWT_SECRET=${JWT_SECRET}
+    volumes:
+      - voxium_db:/app/data
+      - voxium_uploads:/app/uploads
+
+volumes:
+  voxium_db:
+  voxium_uploads:
