@@ -1,6 +1,5 @@
 # --- Étape de Build ---
-# On passe sur la version 1.84 qui est bien plus récente
-FROM rust:1.84-slim as builder
+FROM rust:1.85-slim as builder
 
 # Installation des dépendances système
 RUN apt-get update && apt-get install -y \
