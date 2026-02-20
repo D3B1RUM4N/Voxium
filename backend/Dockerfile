@@ -1,5 +1,5 @@
 # --- Étape de Build ---
-FROM rust:1.85-slim as builder
+FROM rust:1.88-slim as builder
 
 # Installation des dépendances système
 RUN apt-get update && apt-get install -y \
