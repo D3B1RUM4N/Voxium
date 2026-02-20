@@ -1,7 +1,5 @@
-# --- Étape de Build ---
 FROM rust:1.88-slim as builder
 
-# Installation des dépendances système
 RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
@@ -10,20 +8,29 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
 COPY . .
 
 WORKDIR /app/backend
 
-# On garde notre sécurité pour SQLx
 ENV SQLX_OFFLINE=true
 
 RUN cargo build --release
 
-# --- Étape Runtime ---
 FROM debian:bookworm-slim
-RUN apt-get update && apt-get install -y libsqlite3-0 ca-certificates && rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y \
+    libsqlite3-0 \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
-COPY --from=builder /app/backend/target/release/backend .
+
+COPY --from=builder /app/backend/target/release/backend ./voxium-backend
+
+# Si tu as besoin du binaire make_admin, décommente la ligne suivante :
+# COPY --from=builder /app/backend/target/release/make_admin ./make_admin
 
 EXPOSE 8080
+
 CMD ["./voxium-backend"]
