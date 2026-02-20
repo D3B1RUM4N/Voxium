@@ -1,7 +1,8 @@
-# --- Étape 1 : Compilation ---
-FROM rust:1.75-slim as builder
+# --- Étape de Build ---
+# On passe sur la version 1.84 qui est bien plus récente
+FROM rust:1.84-slim as builder
 
-# Mise à jour et installation des dépendances critiques
+# Installation des dépendances système
 RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
@@ -10,31 +11,20 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-# On copie tout le dépôt pour respecter le contexte Portainer
 COPY . .
 
-# On se déplace dans le dossier backend pour compiler
 WORKDIR /app/backend
 
-# On force la compilation
+# On garde notre sécurité pour SQLx
+ENV SQLX_OFFLINE=true
+
 RUN cargo build --release
 
-# --- Étape 2 : Runtime ---
+# --- Étape Runtime ---
 FROM debian:bookworm-slim
-
-RUN apt-get update && apt-get install -y \
-    libsqlite3-0 \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
-
+RUN apt-get update && apt-get install -y libsqlite3-0 ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-
-# Récupération de l'exécutable
-COPY --from=builder /app/backend/target/release/backend /app/voxium-backend
-
-# Dossiers pour la persistance
-RUN mkdir -p /app/uploads /app/data
+COPY --from=builder /app/backend/target/release/voxium-backend . 
 
 EXPOSE 8080
-
 CMD ["./voxium-backend"]
